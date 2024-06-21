@@ -1,6 +1,6 @@
 Relation,PromptTemplate
-countryLandBordersCountry,Which countries share a land border with {subject_entity}?
-personHasCityOfDeath,In which city did {subject_entity} die?
-seriesHasNumberOfEpisodes,How many episodes does the series {subject_entity} have?
-awardWonBy,Who won the {subject_entity}?
-companyTradesAtStockExchange,Where do shares of {subject_entity} trade?
+countryLandBordersCountry,Which countries share a land border with {subject_entity}? Answer None if there are no land borders.
+personHasCityOfDeath,In which city did {subject_entity} die? Answer None if {subject_entity} is still alive. There is at most one city possible.
+seriesHasNumberOfEpisodes,How many episodes does the series {subject_entity} have? Answer with a single number.
+awardWonBy,Who won the {subject_entity}? If you do not know you can guess.
+companyTradesAtStockExchange,Where do shares of {subject_entity} trade? Answer None if it is not traded. At most one answer is possible.

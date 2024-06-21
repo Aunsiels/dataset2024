@@ -128,6 +128,8 @@ class Llama3ChatModel(GenerationModel):
                 "SubjectEntity": inp["SubjectEntity"],
                 "Relation": inp["Relation"],
                 "ObjectEntitiesID": wikidata_ids,
+                "RawEntities": qa_answer,
+                "Goldstandard": inp["ObjectEntitiesID"] if "ObjectEntitiesID" in inp else ""
             })
 
         return results
