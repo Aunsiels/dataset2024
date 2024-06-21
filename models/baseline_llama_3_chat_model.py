@@ -161,7 +161,8 @@ class Llama3ChatModel(GenerationModel):
                 "Relation": inp["Relation"],
                 "ObjectEntitiesID": wikidata_ids,
                 "RawEntities": qa_answer,
-                "Goldstandard": goldstandard
+                "Goldstandard": goldstandard,
+                "prompt": prompt
             })
 
         return results
