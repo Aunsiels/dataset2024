@@ -1,5 +1,7 @@
 import csv
+import json
 
+import pickledb
 import requests
 from loguru import logger
 
@@ -38,8 +40,17 @@ class BaselineModel(AbstractModel):
         return res
 
 
+DB_AUTOCOMPLETE = pickledb.load('../data/autocomplete.db', False)
+DB_SEARCH = pickledb.load('../data/search.db', False)
+
+
 def disambiguation_autocomplete(item) -> str:
     item = str(item).strip()
+    if DB_AUTOCOMPLETE.get(item):
+        res = json.loads(DB_AUTOCOMPLETE.get(item))
+        if "search" in res and len(res["search"]) > 0:
+            return res["search"][0]["id"]
+        return item
 
     if not item or item == "None":
         return ""
@@ -57,6 +68,8 @@ def disambiguation_autocomplete(item) -> str:
                    f"&format=json")
             data = requests.get(url).json()
             # Return the first id (Could upgrade this in the future)
+            DB_AUTOCOMPLETE.set(item, json.dumps(data))
+            DB_AUTOCOMPLETE.dump()
             return str(data["search"][0]["id"])
         except Exception as e:
             logger.error(f"Error getting Wikidata ID for `{item}`: {e}")
@@ -64,18 +77,27 @@ def disambiguation_autocomplete(item) -> str:
 
 
 def search(item):
+    if DB_SEARCH.get(item):
+        res = json.loads(DB_SEARCH.get(item))
+        return res
+
+    if not item or item == "None":
+        return ""
     url = f"https://www.wikidata.org/w/index.php?go=Go&search={item}&title=Special%3ASearch&ns0=1&ns120=1"
     data = requests.get(url).content.decode("utf-8")
     soup = BeautifulSoup(data, "html.parser")
     res = []
-    for item in soup.find_all("li", {"class": "mw-search-result mw-search-result-ns-0"}):
-        title = item.find("span", {"class": "wb-itemlink-label"}).text
-        description = item.find("span", {"class": "wb-itemlink-description"}).text
-        id = item.find("span", {"class": "wb-itemlink-id"}).text.strip("(").strip(")")
-        stats = item.find("div", {"class": "mw-search-result-data"}).text
+    for item_list in soup.find_all("li", {"class": "mw-search-result mw-search-result-ns-0"}):
+        title = item_list.find("span", {"class": "wb-itemlink-label"}).text
+        description = item_list.find("span", {"class": "wb-itemlink-description"}).text
+        id = item_list.find("span", {"class": "wb-itemlink-id"}).text.strip("(").strip(")")
+        stats = item_list.find("div", {"class": "mw-search-result-data"}).text
         statements = stats.split(" ")[0]
         res.append((title, description, id, statements))
-    return sorted(res, key=lambda x: int(x[-1]), reverse=True)
+    res = sorted(res, key=lambda x: int(x[-1]), reverse=True)
+    DB_SEARCH.set(item, json.dumps(res))
+    DB_SEARCH.dump()
+    return res
 
 
 def disambiguation_search(item) -> str:
@@ -88,10 +110,11 @@ def disambiguation_search(item) -> str:
             return res[0][2]
     except Exception as e:
         logger.error(f"Error getting Wikidata ID for `{item}`: {e}")
+        raise
         return item
 
 
 if __name__ == '__main__':
     print(disambiguation_autocomplete("Ray Bradbury,"))
     print(disambiguation_search("Ray Bradbury,"))
-    print(BaselineModel.disambiguation_baseline("Ray Bradbury,"))
+    #print(BaselineModel.disambiguation_baseline("Ray Bradbury,"))

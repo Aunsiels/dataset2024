@@ -8,3 +8,5 @@ loguru
 PyYAML
 accelerate
 bitsandbytes
+beautifulsoup4
+pickledb
