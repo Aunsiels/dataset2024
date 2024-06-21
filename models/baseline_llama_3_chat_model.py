@@ -5,6 +5,7 @@ from loguru import logger
 from tqdm import tqdm
 
 from models.baseline_generation_model import GenerationModel
+from models.baseline_model import search
 
 
 class Llama3ChatModel(GenerationModel):
@@ -99,12 +100,22 @@ class Llama3ChatModel(GenerationModel):
 
     def generate_predictions(self, inputs):
         logger.info("Generating predictions...")
-        prompts = [
-            self.create_prompt(
-                subject_entity=inp["SubjectEntity"],
-                relation=inp["Relation"]
-            ) for inp in inputs
-        ]
+        prompts = []
+        for inp in inputs:
+            entity_name = inp["SubjectEntity"]
+            search_result = search(inp["SubjectEntityID"])
+            description = ""
+            for result in search_result:
+                if result[2] == inp["SubjectEntityID"]:
+                    description = result[1]
+            if description:
+                entity_name += " ({})".format(description)
+            prompts.append(
+                self.create_prompt(
+                    subject_entity=entity_name,
+                    relation=inp["Relation"]
+                )
+            )
 
         outputs = []
         for prompt in tqdm(prompts, desc="Generating predictions"):
@@ -126,17 +137,31 @@ class Llama3ChatModel(GenerationModel):
                 wikidata_ids = self.disambiguate_entities(qa_answer)
             else:
                 if "=" in qa_answer:
-                    answer = qa_answer.split("=")[1].split(" ")[0].strip()
+                    split = qa_answer.split("=")
+                    if "+" in split[0]:
+                        answer = split[1].strip().split(" ")[0].strip()
+                    else:
+                        answer = split[0].strip().split(" ")[-1].strip()
                 else:
                     answer = qa_answer.split(" ")[-1]
                 wikidata_ids = [answer]
+            goldstandard = inp["ObjectEntitiesID"] if "ObjectEntitiesID" in inp else []
+            entity_name = []
+            for id in goldstandard:
+                search_result = search(id)
+                name = ""
+                for result in search_result:
+                    if result[2] == id:
+                        name = result[0]
+                        break
+                entity_name.append(name)
             results.append({
                 "SubjectEntityID": inp["SubjectEntityID"],
                 "SubjectEntity": inp["SubjectEntity"],
                 "Relation": inp["Relation"],
                 "ObjectEntitiesID": wikidata_ids,
                 "RawEntities": qa_answer,
-                "Goldstandard": inp["ObjectEntitiesID"] if "ObjectEntitiesID" in inp else ""
+                "Goldstandard": goldstandard
             })
 
         return results
