@@ -63,28 +63,31 @@ def disambiguation_autocomplete(item) -> str:
             return item
 
 
+def search(item):
+    url = f"https://www.wikidata.org/w/index.php?go=Go&search={item}&title=Special%3ASearch&ns0=1&ns120=1"
+    data = requests.get(url).content.decode("utf-8")
+    soup = BeautifulSoup(data, "html.parser")
+    res = []
+    for item in soup.find_all("li", {"class": "mw-search-result mw-search-result-ns-0"}):
+        title = item.find("span", {"class": "wb-itemlink-label"}).text
+        description = item.find("span", {"class": "wb-itemlink-description"}).text
+        id = item.find("span", {"class": "wb-itemlink-id"}).text.strip("(").strip(")")
+        stats = item.find("div", {"class": "mw-search-result-data"}).text
+        statements = stats.split(" ")[0]
+        res.append((title, description, id, statements))
+    return sorted(res, key=lambda x: int(x[-1]), reverse=True)
+
+
 def disambiguation_search(item) -> str:
     item = str(item).strip()
     if not item or item == "None":
         return ""
     try:
-        url = f"https://www.wikidata.org/w/index.php?go=Go&search={item}&title=Special%3ASearch&ns0=1&ns120=1"
-        data = requests.get(url).content.decode("utf-8")
-        soup = BeautifulSoup(data, "html.parser")
-        res = []
-        for item in soup.find_all("li", {"class": "mw-search-result mw-search-result-ns-0"}):
-            title = item.find("span", {"class": "wb-itemlink-label"}).text
-            description = item.find("span", {"class": "wb-itemlink-description"}).text
-            id = item.find("span", {"class": "wb-itemlink-id"}).text.strip("(").strip(")")
-            stats = item.find("div", {"class": "mw-search-result-data"}).text
-            statements = stats.split(" ")[0]
-            res.append((title, description, id, statements))
-        res = sorted(res, key=lambda x: int(x[-1]), reverse=True)
+        res = search(item)
         if res:
             return res[0][2]
     except Exception as e:
         logger.error(f"Error getting Wikidata ID for `{item}`: {e}")
-        raise
         return item
 
 

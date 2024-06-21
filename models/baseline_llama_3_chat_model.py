@@ -122,7 +122,14 @@ class Llama3ChatModel(GenerationModel):
                                         desc="Disambiguating entities"):
             # Remove the original prompt from the generated text
             qa_answer = output[0]["generated_text"][len(prompt):].strip()
-            wikidata_ids = self.disambiguate_entities(qa_answer)
+            if inp["Relation"] != "seriesHasNumberOfEpisodes":
+                wikidata_ids = self.disambiguate_entities(qa_answer)
+            else:
+                if "=" in qa_answer:
+                    answer = qa_answer.split("=")[1].split(" ")[0].strip()
+                else:
+                    answer = qa_answer.split(" ")[-1]
+                wikidata_ids = [answer]
             results.append({
                 "SubjectEntityID": inp["SubjectEntityID"],
                 "SubjectEntity": inp["SubjectEntity"],

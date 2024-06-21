@@ -141,7 +141,7 @@ class GenerationModel(BaselineModel):
 
     def disambiguate_entities(self, qa_answer: str):
         wikidata_ids = []
-        qa_entities = qa_answer.split(", ")
+        qa_entities = qa_answer.split(",")
         for entity in qa_entities:
             entity = entity.strip()
             if entity.startswith("and "):
