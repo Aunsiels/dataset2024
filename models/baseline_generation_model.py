@@ -141,9 +141,14 @@ class GenerationModel(BaselineModel):
 
     def disambiguate_entities(self, qa_answer: str):
         wikidata_ids = []
-        qa_entities = qa_answer.split(",")
+        if "," in qa_answer:
+            qa_entities = qa_answer.split(",")
+        else:
+            qa_entities = qa_answer.split("\n")
         for entity in qa_entities:
             entity = entity.strip()
+            if not entity or len(entity) > 50:
+                continue
             if entity.startswith("and "):
                 entity = entity[4:].strip()
             wikidata_id = self.disambiguation_baseline(entity)
