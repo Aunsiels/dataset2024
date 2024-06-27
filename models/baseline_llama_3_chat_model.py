@@ -103,13 +103,15 @@ class Llama3ChatModel(GenerationModel):
         prompts = []
         for inp in inputs:
             entity_name = inp["SubjectEntity"]
-            search_result = search(inp["SubjectEntityID"])
-            description = ""
-            for result in search_result:
-                if result[2] == inp["SubjectEntityID"]:
-                    description = result[1]
-            if description:
-                entity_name += " ({})".format(description)
+            if inp["Relation"] in ["companyTradesAtStockExchange", "countryLandBordersCountry",
+                                   "personHasCityOfDeath", "seriesHasNumberOfEpisodes"]:
+                search_result = search(inp["SubjectEntityID"])
+                description = ""
+                for result in search_result:
+                    if result[2] == inp["SubjectEntityID"]:
+                        description = result[1]
+                if description:
+                    entity_name += " ({})".format(description)
             prompts.append(
                 self.create_prompt(
                     subject_entity=entity_name,
