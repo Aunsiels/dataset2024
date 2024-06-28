@@ -120,14 +120,22 @@ class Llama3ChatModel(GenerationModel):
             )
 
         outputs = []
-        for prompt in tqdm(prompts, desc="Generating predictions"):
+        for inp, prompt in tqdm(zip(inputs, prompts), desc="Generating predictions"):
             output = self.pipe(
                 prompt,
                 max_new_tokens=self.max_new_tokens,
-                eos_token_id=self.terminators,
-                top_k=10
+                eos_token_id=self.terminators
             )
-            print(output)
+            all_outputs = [output[0]]
+            if inp["Relation"] == "awardWonBy":
+                for _ in range(10):
+                    output = self.pipe(
+                        prompt,
+                        max_new_tokens=self.max_new_tokens * 2,
+                        eos_token_id=self.terminators,
+                        do_sample=True
+                    )
+                    all_outputs.append(output[0])
             outputs.append(output)
 
         logger.info("Disambiguating entities...")
@@ -137,10 +145,10 @@ class Llama3ChatModel(GenerationModel):
                                         desc="Disambiguating entities"):
             # Remove the original prompt from the generated text
             qa_answers = [x["generated_text"][len(prompt):].strip() for x in output]
-            wikidata_ids = []
+            wikidata_ids = set()
             for qa_answer in qa_answers:
                 if inp["Relation"] != "seriesHasNumberOfEpisodes":
-                    wikidata_ids += self.disambiguate_entities(qa_answer)
+                    wikidata_ids += set(self.disambiguate_entities(qa_answer))
                 else:
                     if "=" in qa_answer:
                         split = qa_answer.split("=")
@@ -150,7 +158,8 @@ class Llama3ChatModel(GenerationModel):
                             answer = split[0].strip().split(" ")[-1].strip()
                     else:
                         answer = qa_answer.split(" ")[-1]
-                    wikidata_ids += [answer]
+                    wikidata_ids.add(answer)
+            wikidata_ids = list(wikidata_ids)
             goldstandard = inp["ObjectEntitiesID"] if "ObjectEntitiesID" in inp else []
             entity_name = []
             for id in goldstandard:
@@ -166,7 +175,7 @@ class Llama3ChatModel(GenerationModel):
                 "SubjectEntity": inp["SubjectEntity"],
                 "Relation": inp["Relation"],
                 "ObjectEntitiesID": wikidata_ids,
-                "RawEntities": qa_answer,
+                "RawEntities": "; ".join(qa_answers),
                 "Goldstandard": goldstandard,
                 "prompt": prompt
             })
