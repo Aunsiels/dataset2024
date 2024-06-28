@@ -88,7 +88,7 @@ class GenerationModel(BaselineModel):
                     if remaining < 10:
                         n_episodes += remaining
                         remaining -= n_episodes
-                    seasons.append(str(n_episodes))
+                    seasons.append("season " + str(len(seasons) + 1) + " : " + str(n_episodes))
                 answer = " + ".join(seasons) + " = " + str(total)
             else:
                 answer = f'{", ".join(row["ObjectEntities"]) if row["ObjectEntities"] else "None"}'
