@@ -125,7 +125,7 @@ class Llama3ChatModel(GenerationModel):
                 prompt,
                 max_new_tokens=self.max_new_tokens,
                 eos_token_id=self.terminators,
-                topk=10
+                top_k=10
             )
             print(output)
             outputs.append(output)
