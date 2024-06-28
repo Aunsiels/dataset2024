@@ -120,7 +120,9 @@ class Llama3ChatModel(GenerationModel):
             )
 
         outputs = []
-        for inp, prompt in tqdm(zip(inputs, prompts), desc="Generating predictions"):
+        for inp, prompt in tqdm(zip(inputs, prompts),
+                                desc="Generating predictions",
+                                total=len(inputs)):
             output = self.pipe(
                 prompt,
                 max_new_tokens=self.max_new_tokens,
