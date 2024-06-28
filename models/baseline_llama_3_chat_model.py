@@ -130,10 +130,10 @@ class Llama3ChatModel(GenerationModel):
             )
             all_outputs = [output[0]]
             if inp["Relation"] == "awardWonBy":
-                for _ in range(10):
+                for _ in range(30):
                     output = self.pipe(
                         prompt,
-                        max_new_tokens=self.max_new_tokens * 2,
+                        max_new_tokens=self.max_new_tokens * 3,
                         eos_token_id=self.terminators,
                         do_sample=True
                     )
