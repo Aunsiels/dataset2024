@@ -125,7 +125,9 @@ class Llama3ChatModel(GenerationModel):
                 prompt,
                 max_new_tokens=self.max_new_tokens,
                 eos_token_id=self.terminators,
+                topk=10
             )
+            print(output)
             outputs.append(output)
 
         logger.info("Disambiguating entities...")
@@ -135,7 +137,6 @@ class Llama3ChatModel(GenerationModel):
                                         desc="Disambiguating entities"):
             # Remove the original prompt from the generated text
             qa_answers = [x["generated_text"][len(prompt):].strip() for x in output]
-            print(qa_answers)
             wikidata_ids = []
             for qa_answer in qa_answers:
                 if inp["Relation"] != "seriesHasNumberOfEpisodes":
