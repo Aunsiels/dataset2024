@@ -150,7 +150,7 @@ class Llama3ChatModel(GenerationModel):
             wikidata_ids = set()
             for qa_answer in qa_answers:
                 if inp["Relation"] != "seriesHasNumberOfEpisodes":
-                    wikidata_ids += set(self.disambiguate_entities(qa_answer))
+                    wikidata_ids = wikidata_ids.union(set(self.disambiguate_entities(qa_answer)))
                 else:
                     if "=" in qa_answer:
                         split = qa_answer.split("=")
