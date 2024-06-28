@@ -78,9 +78,22 @@ class GenerationModel(BaselineModel):
         logger.info("Instantiating in-context examples with train data...")
         for row in train_data:
             template = self.prompt_templates[row["Relation"]]
+            if row["Relation"] == "awardWonBy":
+                total = int(row["ObjectEntities"])
+                seasons = []
+                remaining = total
+                while remaining > 0:
+                    n_episodes = random.randint(10, min(remaining, 25))
+                    remaining -= n_episodes
+                    if remaining < 10:
+                        n_episodes += remaining
+                        remaining -= n_episodes
+                    seasons.append(str(n_episodes))
+                answer = " + ".join(seasons) + " = " + str(total)
+            else:
+                answer = f'{", ".join(row["ObjectEntities"]) if row["ObjectEntities"] else "None"}'
             example = (
-                f'{template.format(subject_entity=row["SubjectEntity"])} '
-                f'{", ".join(row["ObjectEntities"]) if row["ObjectEntities"] else "None"}'
+                f'{template.format(subject_entity=row["SubjectEntity"])} ' + answer
             )
             in_context_examples.append(example)
 
