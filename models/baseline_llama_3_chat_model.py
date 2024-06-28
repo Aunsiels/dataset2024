@@ -134,19 +134,22 @@ class Llama3ChatModel(GenerationModel):
                                         total=len(inputs),
                                         desc="Disambiguating entities"):
             # Remove the original prompt from the generated text
-            qa_answer = output[0]["generated_text"][len(prompt):].strip()
-            if inp["Relation"] != "seriesHasNumberOfEpisodes":
-                wikidata_ids = self.disambiguate_entities(qa_answer)
-            else:
-                if "=" in qa_answer:
-                    split = qa_answer.split("=")
-                    if "+" in split[0]:
-                        answer = split[1].strip().split(" ")[0].strip()
-                    else:
-                        answer = split[0].strip().split(" ")[-1].strip()
+            qa_answers = [x["generated_text"][len(prompt):].strip() for x in output]
+            print(qa_answers)
+            wikidata_ids = []
+            for qa_answer in qa_answers:
+                if inp["Relation"] != "seriesHasNumberOfEpisodes":
+                    wikidata_ids += self.disambiguate_entities(qa_answer)
                 else:
-                    answer = qa_answer.split(" ")[-1]
-                wikidata_ids = [answer]
+                    if "=" in qa_answer:
+                        split = qa_answer.split("=")
+                        if "+" in split[0]:
+                            answer = split[1].strip().split(" ")[0].strip()
+                        else:
+                            answer = split[0].strip().split(" ")[-1].strip()
+                    else:
+                        answer = qa_answer.split(" ")[-1]
+                    wikidata_ids += [answer]
             goldstandard = inp["ObjectEntitiesID"] if "ObjectEntitiesID" in inp else []
             entity_name = []
             for id in goldstandard:
